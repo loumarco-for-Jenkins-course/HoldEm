@@ -1,0 +1,132 @@
+<html>
+<title>Poker Test</title>
+<script src="js/cardfuncs.js"></script>
+
+<script>
+// This is the card deck - Images preloaded
+var images = [];
+// These are the community cards
+var commCards = [] ;
+// These are the player hands (2 - 7) and $$$
+// playerHands[ N ].money, playerHands[ N ].cards, playerHands[ N ].playerid
+// For money, the ID for the table data cell is 'money+playerHands[ n ]'
+// playerHands.numPlayers too
+// playerHands.currentPlayer is the player whose turn it is to bet/traise/check/fold
+var playerHands = { } ;
+// This is the value of the pot
+var pot = 0 ;
+// This is the value of the bet
+var bet = 20 ;
+// Set up the player information in object playerHands. See above for what it holds
+function setUpPlayerInfo( numPlayers ) {
+	// num players
+	playerHands.numPlayers = numPlayers ;
+	// The current player - first one able to bid/pass/etc.
+	setCurrentPlayer( 0 ) ;
+	// Kinda fucked up here.
+	// Have player data 0-based; playerID 1-based.
+	// Don't know what the fuck I was thinking....
+  	for ( var pIDX = 0; pIDX < numPlayers; pIDX++ ) {
+		// Player card array (to be filled in later), $$$ and playerID
+		// Need to initialize each player's holdings as an empty array
+		// JS will complain if we add an element to a non-existent array	
+		playerHands[ pIDX ] = { money: 0, cards: [], playerid: "player" + pIDX } ;			
+	}  
+	//playerHands[ pIDX ] = { money: 0, cards: [], playerid: "player" + (pIDX + 1) } ;
+	
+	
+}
+// Set the players up.
+// Initialize properties of the playerHands object
+// deal the cards
+// Ante up
+// Fiddle with disabling/enabling buttons
+function setUpPlayers( ) {
+	// Compute initial ante. Assume all players have enough to ante up 
+	function anteUp( betAmt, numPlayers ) {
+			return numPlayers * betAmt ;
+	}
+	// Set up player info object
+	setUpPlayerInfo( document.getElementById( 'numplayers' ).value ) ;
+	// Deal two cards to each player. Put in raise, check, bet, fold buttons
+	dealToPlayers( ) ;
+	// Calculate pot amount: An ante from each player for the BET amount
+	// Show pot
+	pot = anteUp( bet, playerHands.numPlayers ) ;
+	showPotBetAmount(pot, bet ) ;
+	// Deactivate 'Deal' button and # players input field; enable 'Flop' button; 
+	document.getElementById( 'flop' ).disabled = false ;
+	document.getElementById( 'numplayers' ).disabled = true ;
+	document.getElementById( 'deal' ).disabled = true ;
+
+}
+// Deal another community card (turn and river), inactivate button
+function dealCommunityCard( buttonClicked ) {
+	// Retrieve the community card HTML, insert new cell before "</tr>"
+	var existingTableStr = document.getElementById( 'commcardtable' ).innerHTML ;
+	var posEndRow        = existingTableStr.indexOf( '</tr>' ) ;
+	// Add card to community card array
+	commCards.push( selectACard( ) ) ;
+	// Get table cell with just-selected card
+	var cellJustSelected = cellWithCardImage( commCards[ commCards.length - 1 ] ) ;
+	// Insert table data cell into table showing community cards
+	var newTableStr      = existingTableStr.slice( 0, posEndRow ) + 
+								  cellJustSelected + 
+								  existingTableStr.slice( posEndRow ) ;
+	// Update/redisplay community card table
+	document.getElementById( "commcardtable" ).innerHTML = newTableStr ;	
+	// Disable button (both 'turn' and 'river' buttons) 
+	buttonClicked.disabled = true ;
+	// If this was the 'turn' button, need to enable 'river' button ONLY AFTER all players made bets
+	document.getElementById( 'river' ).disabled = ( buttonClicked.id !== 'turn' && allPlayersBet() ) ;
+	// If this was the 'river' button, need to enable 'Next Hand' button ONLY AFTER all players made bets
+	document.getElementById( 'nexthand' ).disabled = ( buttonClicked.id !== 'river' && allPlayersBet() ) ;
+}
+// Display the pot - to the right of the community cards
+function showPotBetAmount( potAmt, betAmt ) {
+	document.getElementById( 'amounts' ).innerHTML = "<h3>Pot Amount = " + potAmt + "</h3>" +
+                                                     "<h3>Bet Amount = " + betAmt + "</h3>"	;
+}
+// Did all players bet?
+// Need this to enable betting round buttons: DOn't enable until ALL players bet
+// Eventually this will be expanded into the actual betting function
+function allPlayersBet() {
+	return true ;
+}
+// Deal the next hand
+// Clear out existing info...then deal the cards
+// Keep same number of players
+// Don't forget to 
+function dealNextHand( buttonClicked ) {
+	document.getElementById( 'nexthand' ).disabled = true ;
+	// Clear out community cards
+	document.getElementById( 'commcardtable' ).innerHTML  = "" ;
+	// Set up players....Deal, I guess
+	setUpPlayers() ;
+}
+
+</script>
+
+<body onload="preload();">
+	<!-- seem to need an ONSUBMIT with a SUBMIT button to enforce teh REQUIRED attribute on #players -->
+	<form onsubmit="setUpPlayers( );return false;">
+		How many players? (2-7)<input id="numplayers" type="number" min="2" max="7" required>
+		<button id='deal' type="submit">Deal</button>
+		<button id='flop' type="button" onclick='showFlop(  );' disabled='true'>Flop</button>
+		<button id='turn' type="button" onclick='dealCommunityCard( this );' disabled='true'>Turn</button>
+		<button id='river' type="button" onclick='dealCommunityCard( this );' disabled='true'>River</button>
+		<button id='nexthand' type="button" onclick='dealNextHand( this );' disabled='true'>Next Hand</button>
+		
+	<!-- 	<button id='river' type="button" onclick='listInfo( );'>list info</button> -->
+
+	</form>
+	<!-- Community cards go here -->
+	<div id="commcardtable"></div>
+	<!-- Show the pot here -->
+	<div id="amounts"></div>
+	<p>
+	<!-- The player hands go here -->
+	<div id="playerhandtable"></div>
+
+</body>
+</html>
