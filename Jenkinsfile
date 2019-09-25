@@ -3,7 +3,7 @@ pipeline {
     agent any
     stages {
         stage('Sonarqube analysis') {
-          step {
+          steps {
             script {
              scannerHome = tool 'sonarqube';
             }
