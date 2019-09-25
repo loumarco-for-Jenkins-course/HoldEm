@@ -1,11 +1,14 @@
-stage('Sonarqube analysis') {
-    steps {
-      script {
-             scannerHome = tool 'SonarScanner';
+// Sonarcube for holdem test
+pipeline {
+    agent any
+    stages {
+        stage('Sonarqube analysis') {
+         step {
+            script {
+             scannerHome = tool 'sonarqube';
+            }
+         withSonarQubeEnv('sonarqube') {
+            bat "${scannerHome}/bin/sonar-scanner.bat" 
+         }
       }
-      withSonarQubeEnv('SonarQube') {
-         bat "${scannerHome}/bin/sonar-scanner.bat" 
-      }
-
-    }
 }
